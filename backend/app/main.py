@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import events, sites, classifications, historical, satellite, alerts
+from app.api import events, sites, classifications, historical, satellite, alerts, complexes, atmospheric
 
 app = FastAPI(
     title="SIH 26162 - Thermal Intelligence API",
@@ -24,6 +24,9 @@ app.include_router(classifications.router, prefix="/api/classifications", tags=[
 app.include_router(historical.router, prefix="/api/historical", tags=["Historical Data"])
 app.include_router(satellite.router, prefix="/api/satellite", tags=["Satellite"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["Alerts"])
+app.include_router(complexes.router, prefix="/api/complexes", tags=["Facility Complexes"])
+app.include_router(atmospheric.router, prefix="/api/atmospheric", tags=["Atmospheric"])
+
 
 @app.get("/")
 def read_root():

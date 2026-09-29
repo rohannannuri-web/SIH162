@@ -69,5 +69,6 @@ def explain_classification(event_id: int, db: Session = Depends(get_db)):
         "classification": class_name,
         "class_id": class_id,
         "risk": risk,
-        "evidence": evidence
+        "evidence": evidence,
+        "shap_values": feature.shap_json
     }
