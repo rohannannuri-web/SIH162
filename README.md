@@ -60,7 +60,25 @@ If a high-confidence thermal/gas event occurs further than 3km from any register
 2. **Node.js 18+**
 3. **Python 3.10+** (Conda/Miniconda recommended)
 
-### 1. Launch the System
+### 1. First-Time Setup (For Fresh Clones)
+If you just cloned this repository, you need to install dependencies and set up your environment variables.
+
+**Backend Setup:**
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+```
+*(Open the newly created `backend/.env` file and paste your NASA FIRMS API key)*
+
+**Frontend Setup:**
+```bash
+cd ../frontend
+npm install
+cd ..
+```
+
+### 2. Launch the System
 Ensure Docker Desktop is open. Simply execute the start script from the root directory:
 ```bash
 ./start.bat
@@ -70,7 +88,7 @@ This script will automatically:
 2. Start the FastAPI backend on `http://127.0.0.1:8000`.
 3. Start the React frontend on `http://localhost:5173`.
 
-### 2. Initialize the Intelligence Pipeline
+### 3. Initialize the Intelligence Pipeline
 In a new terminal window, navigate to the `backend` directory and run the full pipeline to ingest real-time data, fetch satellite imagery, and compute fusion scores:
 
 ```bash
@@ -79,7 +97,7 @@ python init_db.py --all
 ```
 *(Note: Initial run may take 3-5 minutes as it queries NASA FIRMS, OpenStreetMap, and Microsoft Planetary Computer).*
 
-### 3. Access the Dashboard
+### 4. Access the Dashboard
 Open your web browser and navigate to **[http://localhost:5173](http://localhost:5173)** to view the live HELIOS-X dashboard.
 
 ---
