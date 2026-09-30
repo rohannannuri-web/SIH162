@@ -56,6 +56,35 @@ function FiltersPanel({ filters, setFilters }) {
             })}
           </div>
         </div>
+
+        <div className="pt-2">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Intelligence Layers</h3>
+          <div className="space-y-2">
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, showFusion: !prev.showFusion }))}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 border ${
+                filters.showFusion ? 'border-purple-500 bg-dark-700/50 text-slate-100' : 'border-transparent hover:bg-dark-700/30 text-slate-400'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full border-2 border-purple-500 ${filters.showFusion ? 'bg-transparent shadow-lg shadow-purple-500/50' : 'opacity-50'}`}></div>
+                <span>4-Channel Fusion Scores</span>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, showUnregistered: !prev.showUnregistered }))}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 border ${
+                filters.showUnregistered ? 'border-pink-500 bg-dark-700/50 text-slate-100' : 'border-transparent hover:bg-dark-700/30 text-slate-400'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full bg-pink-500 ${filters.showUnregistered ? 'shadow-lg shadow-pink-500/50 animate-pulse' : 'opacity-50'}`}></div>
+                <span>Unregistered Activity</span>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

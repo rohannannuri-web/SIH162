@@ -12,6 +12,9 @@ const API_BASE = 'http://127.0.0.1:8000/api';
 function App() {
   const [eventsGeoJSON, setEventsGeoJSON] = useState(null);
   const [sitesGeoJSON, setSitesGeoJSON] = useState(null);
+  const [fusionGeoJSON, setFusionGeoJSON] = useState(null);
+  const [unregisteredGeoJSON, setUnregisteredGeoJSON] = useState(null);
+  const [brickKilnZones, setBrickKilnZones] = useState(null);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedSiteId, setSelectedSiteId] = useState(null);
   
@@ -21,16 +24,21 @@ function App() {
   // Filters state
   const [filters, setFilters] = useState({
     timeRange: 7, // days
-    classes: [0, 1, 2, 3]
+    classes: [0, 1, 2, 3],
+    showFusion: true,
+    showUnregistered: true
   });
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [eventsRes, sitesRes, classRes] = await Promise.all([
+        const [eventsRes, sitesRes, classRes, fusionRes, unregRes, brickRes] = await Promise.all([
           axios.get(`${API_BASE}/events/geojson`),
           axios.get(`${API_BASE}/sites/geojson`),
-          axios.get(`${API_BASE}/classifications`)
+          axios.get(`${API_BASE}/classifications`),
+          axios.get(`${API_BASE}/fusion/geojson`).catch(() => ({ data: null })),
+          axios.get(`${API_BASE}/unregistered/geojson`).catch(() => ({ data: null })),
+          axios.get(`${API_BASE}/unregistered/brick-kiln-zones`).catch(() => ({ data: null }))
         ]);
         
         // Enrich events with class_id
@@ -47,6 +55,9 @@ function App() {
 
         setEventsGeoJSON(enrichedEvents);
         setSitesGeoJSON(sitesRes.data);
+        if (fusionRes.data) setFusionGeoJSON(fusionRes.data);
+        if (unregRes.data) setUnregisteredGeoJSON(unregRes.data);
+        if (brickRes.data) setBrickKilnZones(brickRes.data);
       } catch (err) {
         console.error("Failed to load initial data:", err);
       } finally {
@@ -61,12 +72,12 @@ function App() {
       {/* Top Header Navigation */}
       <header className="h-16 flex items-center justify-between px-6 bg-dark-800/90 border-b border-slate-700/50 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
-            <Activity size={24} className="text-white" />
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-orange-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.15)] text-xl backdrop-blur-md">
+            🔥
           </div>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-white">SIH 26162</h1>
-            <p className="text-xs text-slate-400 font-medium tracking-wider uppercase">Thermal Intelligence</p>
+            <h1 className="text-lg font-semibold tracking-tight text-white">HELIOS-X</h1>
+            <p className="text-xs text-slate-400 font-medium tracking-wider uppercase">Satellite-Powered Thermal Intelligence</p>
           </div>
         </div>
         
@@ -96,6 +107,9 @@ function App() {
             <MapView 
               eventsGeoJSON={eventsGeoJSON} 
               sitesGeoJSON={sitesGeoJSON}
+              fusionGeoJSON={fusionGeoJSON}
+              unregisteredGeoJSON={unregisteredGeoJSON}
+              brickKilnZones={brickKilnZones}
               filters={filters}
               onEventClick={setSelectedEventId}
               onSiteClick={setSelectedSiteId}

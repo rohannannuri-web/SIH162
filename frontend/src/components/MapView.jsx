@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-function MapView({ eventsGeoJSON, sitesGeoJSON, filters, onEventClick, onSiteClick }) {
+function MapView({ eventsGeoJSON, sitesGeoJSON, fusionGeoJSON, unregisteredGeoJSON, brickKilnZones, filters, onEventClick, onSiteClick }) {
   const position = [17.4, 78.4]; // Center near Hyderabad
 
   const getColor = (class_id) => {
@@ -79,6 +79,40 @@ function MapView({ eventsGeoJSON, sitesGeoJSON, filters, onEventClick, onSiteCli
     fillOpacity: 0.3
   };
 
+  const brickKilnStyle = {
+    fillColor: '#fef08a', // Yellowish for seasonal
+    color: '#eab308',
+    weight: 2,
+    opacity: 0.6,
+    fillOpacity: 0.1,
+    dashArray: '5, 5'
+  };
+
+  const unregisteredPointToLayer = (feature, latlng) => {
+    return L.circleMarker(latlng, {
+      radius: 12,
+      fillColor: '#ec4899', // Pink for unregistered
+      color: '#be185d',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.8,
+      className: 'animate-pulse'
+    });
+  };
+
+  const fusionPointToLayer = (feature, latlng) => {
+    // Highly confident multi-channel fusion gets a hollow purple ring
+    return L.circleMarker(latlng, {
+      radius: 16,
+      fillColor: 'transparent',
+      color: '#8b5cf6', // Purple
+      weight: 3,
+      opacity: 0.9,
+      dashArray: '4, 4'
+    });
+  };
+
+
   return (
     <div className="absolute inset-0" style={{ zIndex: 0 }}>
       {/* react-leaflet MapContainer must be given a height */}
@@ -93,12 +127,37 @@ function MapView({ eventsGeoJSON, sitesGeoJSON, filters, onEventClick, onSiteCli
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+        {brickKilnZones && (
+          <GeoJSON 
+            data={brickKilnZones}
+            style={brickKilnStyle}
+          />
+        )}
+
         {sitesGeoJSON && (
           <GeoJSON 
             data={sitesGeoJSON} 
             pointToLayer={sitePointToLayer}
             style={siteStyle}
             onEachFeature={onEachSite}
+          />
+        )}
+
+        {fusionGeoJSON && filters.showFusion && (
+          <GeoJSON 
+            key={"fusion"} 
+            data={fusionGeoJSON} 
+            pointToLayer={fusionPointToLayer}
+            onEachFeature={onEachEvent}
+          />
+        )}
+
+        {unregisteredGeoJSON && filters.showUnregistered && (
+          <GeoJSON 
+            key={"unreg"} 
+            data={unregisteredGeoJSON} 
+            pointToLayer={unregisteredPointToLayer}
+            onEachFeature={onEachEvent}
           />
         )}
 

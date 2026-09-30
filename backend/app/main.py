@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import events, sites, classifications, historical, satellite, alerts, complexes, atmospheric
+from app.api import events, sites, classifications, historical, satellite, alerts, complexes, atmospheric, fusion, unregistered
 
 app = FastAPI(
     title="SIH 26162 - Thermal Intelligence API",
@@ -26,6 +26,8 @@ app.include_router(satellite.router, prefix="/api/satellite", tags=["Satellite"]
 app.include_router(alerts.router, prefix="/api/alerts", tags=["Alerts"])
 app.include_router(complexes.router, prefix="/api/complexes", tags=["Facility Complexes"])
 app.include_router(atmospheric.router, prefix="/api/atmospheric", tags=["Atmospheric"])
+app.include_router(fusion.router, prefix="/api/fusion", tags=["Multi-Channel Fusion"])
+app.include_router(unregistered.router, prefix="/api/unregistered", tags=["Unregistered Activity"])
 
 
 @app.get("/")

@@ -58,8 +58,11 @@ class FusedEventScore(Base):
     event_id          = Column(BigInteger, ForeignKey("firms_events.event_id"), primary_key=True)
     complex_id        = Column(BigInteger, nullable=True)
     fused_score       = Column(Float, default=0.0)
-    signal_agreement  = Column(String(30))   # BOTH / THERMAL_ONLY / ATMOSPHERIC_ONLY / NEITHER
+    signal_agreement  = Column(String(50))   # MULTI_CHANNEL_CONFIRMED / THERMAL_ONLY / ATMOSPHERIC_ONLY / NIGHTTIME_ONLY / NEITHER
     alert_category    = Column(String(200), nullable=True)
-    explanation       = Column(Text, nullable=True)
+    explanation       = Column(Text, nullable=True)    # plain-language evidence trace
     atmos_max_z       = Column(Float, nullable=True)
     computed_at       = Column(String(25), nullable=True)  # ISO datetime
+    # Phase 5e: per-channel breakdown JSON
+    channel_details   = Column(Text, nullable=True)    # JSON: {thermal, atmospheric, burn_scar, nighttime}
+    n_channels        = Column(Integer, default=0)     # how many channels fired

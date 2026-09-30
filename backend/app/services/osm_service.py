@@ -5,7 +5,7 @@ from app.models.firms import FirmsEvent
 from shapely.geometry import shape, Point, Polygon
 import json
 
-OVERPASS_URL = "https://overpass.kumi.systems/api/interpreter"
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 def fetch_and_store_osm_infrastructure(db: Session, radius_m: int = 2000):
     """
@@ -26,7 +26,18 @@ def fetch_and_store_osm_infrastructure(db: Session, radius_m: int = 2000):
     tags = [
         '"landuse"="industrial"',
         '"power"="plant"',
-        '"man_made"="works"'
+        '"man_made"="works"',
+        '"man_made"="kiln"',
+        '"industrial"="refinery"',
+        '"industrial"="steel"',
+        '"industrial"="metal"',
+        '"industrial"="cement"',
+        '"industrial"="gas"',
+        '"industrial"="chemical"',
+        '"landuse"="quarry"',
+        '"man_made"="petroleum_well"',
+        '"man_made"="gas_well"',
+        '"man_made"="flare"',
     ]
     
     query_parts = []
@@ -54,13 +65,18 @@ def fetch_and_store_osm_infrastructure(db: Session, radius_m: int = 2000):
         batch = query_parts[i:i + batch_size]
         query = f"[out:json][timeout:90];\n(\n  " + "\n  ".join(batch) + "\n);\nout geom;"
         
-        try:
-            response = requests.post(OVERPASS_URL, data={'data': query}, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-        except Exception as e:
-            print(f"Overpass API error on batch {i}: {e}")
-            time.sleep(5)
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(OVERPASS_URL, data={'data': query}, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                break
+            except Exception as e:
+                print(f"Overpass API error on batch {i}, attempt {attempt + 1}: {e}")
+                time.sleep(5)
+        else:
+            print(f"Failed to fetch batch {i} after {max_retries} attempts. Skipping.")
             continue
         
         time.sleep(2) # rate limiting delay
@@ -79,13 +95,37 @@ def fetch_and_store_osm_infrastructure(db: Session, radius_m: int = 2000):
             tags = el.get("tags", {})
             name = tags.get("name", "Unnamed Facility")
             
-            # Determine facility type based on tags
+            # Determine facility type based on tags — expanded taxonomy (Phase 2)
             facility_type = "Industrial"
-            if "power" in tags: facility_type = "Power Plant"
-            elif tags.get("industrial") == "refinery": facility_type = "Refinery"
-            elif tags.get("industrial") == "steelmaking": facility_type = "Steel Plant"
-            elif "quarry" in tags or tags.get("landuse") == "quarry": facility_type = "Quarry"
-            elif tags.get("man_made") == "storage_tank": facility_type = "Storage Tank"
+            man_made = tags.get("man_made", "")
+            industrial = tags.get("industrial", "")
+            power_tag = tags.get("power", "")
+            landuse = tags.get("landuse", "")
+
+            if man_made == "kiln":
+                facility_type = "Brick Kiln"     # seasonal: Oct-Jun (see gem_service)
+            elif power_tag in ("plant", "generator"):
+                facility_type = "Power Plant"
+            elif industrial == "refinery":
+                facility_type = "Refinery"
+            elif industrial in ("steel", "steelmaking", "metal", "metalworks"):
+                facility_type = "Steel Plant"
+            elif industrial == "cement":
+                facility_type = "Cement Plant"
+            elif industrial in ("gas", "gas_processing", "lng"):
+                facility_type = "Gas Processing"
+            elif industrial in ("chemical", "petrochemical"):
+                facility_type = "Petrochemical"
+            elif industrial == "mine" or landuse == "quarry":
+                facility_type = "Mining"
+            elif man_made in ("petroleum_well", "gas_well"):
+                facility_type = "Oil/Gas Well"
+            elif man_made == "flare":
+                facility_type = "Gas Flare"
+            elif man_made == "storage_tank":
+                facility_type = "Storage Tank"
+            elif man_made == "works" and industrial:
+                facility_type = f"Industrial ({industrial})"
 
             # Parse Geometry
             geom = None

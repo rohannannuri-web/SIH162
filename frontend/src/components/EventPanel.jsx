@@ -278,17 +278,7 @@ function EventPanel({ eventId, onClose }) {
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="pt-4 border-t border-slate-700/50 flex gap-3">
-          <button className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-            View History
-          </button>
-          {isHighRisk && (
-            <button className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium shadow-lg shadow-red-500/20 transition-colors">
-              Dispatch Alert
-            </button>
-          )}
-        </div>
+
       </div>
     </div>
   );

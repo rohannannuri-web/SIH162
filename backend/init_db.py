@@ -7,6 +7,9 @@ Phases added in this revision:
   --seed   : Insert static curated seed industrial sites (Phase 3a)
   --cluster: DBSCAN facility-complex clustering (Phase 3a)
   --all    : Runs all phases in dependency order
+  --gem    : Insert GEM facility seeds (Phase 2)
+  --burn   : Run Burn Scar confirmation (Phase 5b/c)
+  --fusion : Run 4-channel Fusion scoring (Phase 5e, 6)
 """
 
 from app.models.database import engine, Base
@@ -16,6 +19,7 @@ from app.models.features import EventFeature, IndustrialBaseline, FusedEventScor
 from app.models.alert import Alert
 from app.models.facility_cluster import FacilityComplex, FacilityHysteresisState
 from app.services.atmospheric_service import AtmosphericReading, AtmosphericBaseline
+from app.services.burn_scar_service import BurnScarResult
 from app.models.database import SessionLocal
 from app.services.firms_ingestion import fetch_and_store_firms_data
 from app.services.osm_service import fetch_and_store_osm_infrastructure
@@ -161,6 +165,57 @@ def run_atmospheric():
         db.close()
 
 
+def run_gem():
+    db = SessionLocal()
+    try:
+        from app.services.gem_service import insert_gem_sites
+        print("Inserting GEM facility seeds (Phase 2)...")
+        insert_gem_sites(db)
+    except Exception as e:
+        print(f"\n[ERROR] GEM ingestion failed: {e}")
+    finally:
+        db.close()
+
+
+def run_burn_scar():
+    db = SessionLocal()
+    try:
+        from app.services.burn_scar_service import analyze_burn_scar, get_burn_coverage_stats
+        from sqlalchemy import text
+        print("Starting Burn Scar optical/SAR confirmation (Phase 5b/5c)...")
+        
+        sql = text("""
+            SELECT fe.event_id, fe.longitude, fe.latitude, fe.acquisition_time
+            FROM firms_events fe
+            JOIN event_features ef ON fe.event_id = ef.event_id
+            WHERE ef.ml_class IN (2, 3)
+            LIMIT 100
+        """)
+        rows = db.execute(sql).fetchall()
+        for row in rows:
+            analyze_burn_scar(db, row[0], float(row[1]), float(row[2]), str(row[3])[:10], None)
+            
+        stats = get_burn_coverage_stats(db)
+        print(f"\n[Burn Scar] Stats: {stats}")
+    except Exception as e:
+        print(f"\n[ERROR] Burn scar phase failed: {e}")
+    finally:
+        db.close()
+
+
+def run_fusion():
+    db = SessionLocal()
+    try:
+        from app.services.fusion_service import run_fusion_for_all_events
+        print("Starting 4-Channel Evidence Fusion Scoring (Phase 5e/6)...")
+        stats = run_fusion_for_all_events(db)
+        print(f"\n[Fusion] Result summary: {stats}")
+    except Exception as e:
+        print(f"\n[ERROR] Fusion phase failed: {e}")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     init_db()
 
@@ -184,16 +239,25 @@ if __name__ == "__main__":
             run_validated_events()
         elif arg == "--atmospheric":
             run_atmospheric()
+        elif arg == "--gem":
+            run_gem()
+        elif arg == "--burn":
+            run_burn_scar()
+        elif arg == "--fusion":
+            run_fusion()
         elif arg == "--all":
             ingest_sample_data()
             ingest_osm_data()
+            run_gem()          # Phase 2: GEM seed layer
             seed_sites()       # Phase 3a: always-on seed layer
             cluster_sites()    # Phase 3a: DBSCAN clustering
             enrich_data()
             generate_features()
             run_ml()
-            run_atmospheric()  # Phase 5: TROPOMI atmospheric fusion
+            run_atmospheric()  # Phase 5a: TROPOMI atmospheric fusion
+            run_burn_scar()    # Phase 5b/c: Sentinel optical/SAR confirmation
+            run_fusion()       # Phase 5e/6: 4-Channel Fusion & Unregistered scoring
             run_validated_events()  # Phase 4b: validated against real incidents
     else:
         print("\nInitialization complete.")
-        print("Run with: --ingest | --osm | --seed | --cluster | --enrich | --features | --ml | --atmospheric | --validate | --all")
+        print("Run with: --ingest | --osm | --gem | --seed | --cluster | --enrich | --features | --ml | --atmospheric | --burn | --fusion | --validate | --all")
