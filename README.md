@@ -1,110 +1,113 @@
-# SIH 26162 - AI-Based Detection and Classification of Industrial Fires
+# 🔥 HELIOS-X: Satellite-Powered Thermal Intelligence
 
-This project provides an AI-enabled geospatial system that ingests satellite thermal anomaly detections (NASA FIRMS), enriches them with spatial and environmental context (OpenStreetMap, Land Cover), analyzes historical thermal behavior, and produces explainable classifications of each detected event using Machine Learning (XGBoost) and Microsoft Planetary Computer STAC (Sentinel-2) capabilities.
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.100.0-009688.svg)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18.x-61DAFB.svg)](https://reactjs.org/) [![PostGIS](https://img.shields.io/badge/PostGIS-15.x-336791.svg)](https://postgis.net/)
 
-## Features
-
-- **NASA FIRMS Ingestion**: Pulls thermal anomaly data automatically.
-- **Contextual Enrichment**: Matches events with local OpenStreetMap (OSM) industrial infrastructure and land cover (ESA WorldCover).
-- **Historical Analysis**: Calculates historical FRP baselines for specific locations to detect deviations.
-- **ML Classification**: Uses an XGBoost model (via Weak Supervision) to classify events as Natural, Agricultural, or Industrial.
-- **Alert System**: Triggers high-risk alerts based on Z-score abnormality and actual ML confidence metrics.
-- **Satellite Evidence**: Dynamically queries STAC APIs to fetch corresponding Sentinel-2 satellite imagery for visual confirmation.
-- **Interactive Dashboard**: A React + Leaflet interface providing interactive filtering, alerting, and deep evidence evaluation.
-
-## Prerequisites
-
-- **Python 3.10+**
-- **Node.js 18+**
-- **PostgreSQL 14+** with **PostGIS** extension
-- **NASA FIRMS API Key** (Get one at [FIRMS](https://firms.modaps.eosdis.nasa.gov/api/))
+**HELIOS-X** is an advanced, production-grade geospatial intelligence system designed to automatically detect, classify, and verify industrial thermal anomalies from space. By fusing multi-spectral satellite imagery, atmospheric gas concentrations, and machine learning, HELIOS-X acts as a global watchdog for unregistered industrial activity and catastrophic high-risk events.
 
 ---
 
-## 1. Database Setup
+## 🌟 Key Features
 
-1. Install PostgreSQL and PostGIS.
-2. Open `psql` or pgAdmin and create the database and user:
-   ```sql
-   CREATE DATABASE sih_db;
-   CREATE USER sih_user WITH ENCRYPTED PASSWORD 'sih_password';
-   GRANT ALL PRIVILEGES ON DATABASE sih_db TO sih_user;
-   ```
-3. Connect to `sih_db` and enable the PostGIS extension:
-   ```sql
-   \c sih_db
-   CREATE EXTENSION IF NOT EXISTS postgis;
-   ```
+### 1. 🛰️ Multi-Constellation Ingestion
+HELIOS-X continuously ingests near real-time thermal anomalies (FRP, brightness, and geospatial coordinates) from NASA's FIRMS API using **VIIRS (SNPP/NOAA-20)** and **MODIS** sensors.
 
----
+### 2. 🤖 ML-Driven Event Classification (XGBoost + SHAP)
+The core engine filters out routine agricultural and forest fires, isolating purely industrial events.
+- **Dynamic Hysteresis:** Tracks the historical baseline of known industrial facilities.
+- **Explainable AI:** Uses SHAP TreeExplainer to provide human-readable evidence traces detailing *why* an event was flagged.
 
-## 2. Backend Setup
+### 3. 🌫️ Atmospheric Gas Cross-Verification (Sentinel-5P)
+Automatically cross-references thermal spikes with anomalous local concentrations of NO₂, SO₂, and CO using the **Tropomi** instrument on Sentinel-5P, guaranteeing multi-modal confirmation for emissions violations.
 
-The backend uses FastAPI, SQLAlchemy, and XGBoost.
+### 4. 📸 Burn Scar & Disturbance Validation (Sentinel-2 & Sentinel-1)
+Queries the Microsoft Planetary Computer STAC API to analyze pre- and post-event satellite imagery.
+- **Optical (Sentinel-2):** Computes Normalized Burn Ratio (ΔNBR) to confirm ground disturbance.
+- **SAR (Sentinel-1):** Automatically falls back to Synthetic Aperture Radar (SAR) backscatter analysis if cloud cover exceeds 30%.
 
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Create and activate a Python virtual environment:
-   ```bash
-   python -m venv venv
-   
-   # Windows
-   .\venv\Scripts\activate
-   # Linux/macOS
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Create a `.env` file in the `backend` directory with your database URL and FIRMS API key:
-   ```env
-   DATABASE_URL=postgresql://sih_user:sih_password@localhost:5432/sih_db
-   FIRMS_API_KEY=your_firms_api_key_here
-   ```
-5. Initialize the database and run the complete data ingestion/ML pipeline:
-   ```bash
-   python init_db.py --all
-   ```
-   *(This step will create tables, ingest NASA FIRMS data, fetch OSM infrastructure, enrich land-cover data, generate features, and run the ML classifier).*
-6. Start the FastAPI server:
-   ```bash
-   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-   ```
-7. To generate alerts, run the alert evaluation endpoint in a new terminal/PowerShell window:
-   ```powershell
-   Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/alerts/evaluate
-   ```
+### 5. 🚨 4-Channel Unregistered Activity Alerting
+HELIOS-X generates a highly confident **Fused Event Score** by combining:
+1. Thermal Confidence
+2. Atmospheric Trace Gases
+3. Ground Disturbance (Burn Scar)
+4. Nighttime Activity (Day/Night proxy)
+
+If a high-confidence thermal/gas event occurs further than 3km from any registered facility (and sits outside known seasonal anomalies like the Indo-Gangetic Brick Kiln belt), it automatically triggers an **UNREGISTERED ACTIVITY** dispatch alert.
 
 ---
 
-## 3. Frontend Setup
+## 🛠️ Tech Stack
 
-The frontend uses React, Vite, Tailwind CSS, and Leaflet.
+### Backend Engine
+- **Language:** Python 3.10+
+- **Framework:** FastAPI
+- **Database:** PostgreSQL + PostGIS (Dockerized)
+- **ORM:** SQLAlchemy + GeoAlchemy2
+- **Machine Learning:** XGBoost, SHAP, scikit-learn
+- **Geospatial Processing:** Rasterio, Xarray, Pyproj, Shapely, PySTAC-Client
 
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open your browser and navigate to `http://localhost:5173`.
+### Frontend Dashboard
+- **Framework:** React 18 (Vite)
+- **Styling:** TailwindCSS + Lucide Icons
+- **Mapping:** React-Leaflet + OpenStreetMap
+- **Charts:** Recharts
 
 ---
 
-## Architecture Flow
+## 🚀 Quickstart Guide
 
-1. **Ingestion**: Raw thermal data is pulled from NASA FIRMS.
-2. **Spatial Processing**: PostGIS matches detections against OSM infrastructure polygons and ESA Land Cover geometries.
-3. **Temporal Processing**: Compares real-time FRP against the historical median of that specific spatial buffer.
-4. **ML Inference**: `ml_service.py` runs XGBoost inference to predict the source type (Natural vs. Ag vs. Industrial).
-5. **Abnormality Filter**: Industrial events displaying massive FRP deviations (`robust_frp_z > 2.5`) and high model confidence are escalated to **Abnormal**.
-6. **Delivery**: FastAPI serves the results, STAC dynamically provides Satellite previews, and React renders the interactive mapping.
+### Prerequisites
+1. **Docker Desktop** (must be running to boot the PostGIS database)
+2. **Node.js 18+**
+3. **Python 3.10+** (Conda/Miniconda recommended)
+
+### 1. Launch the System
+Ensure Docker Desktop is open. Simply execute the start script from the root directory:
+```bash
+./start.bat
+```
+This script will automatically:
+1. Boot up the PostGIS database in Docker.
+2. Start the FastAPI backend on `http://127.0.0.1:8000`.
+3. Start the React frontend on `http://localhost:5173`.
+
+### 2. Initialize the Intelligence Pipeline
+In a new terminal window, navigate to the `backend` directory and run the full pipeline to ingest real-time data, fetch satellite imagery, and compute fusion scores:
+
+```bash
+cd backend
+python init_db.py --all
+```
+*(Note: Initial run may take 3-5 minutes as it queries NASA FIRMS, OpenStreetMap, and Microsoft Planetary Computer).*
+
+### 3. Access the Dashboard
+Open your web browser and navigate to **[http://localhost:5173](http://localhost:5173)** to view the live HELIOS-X dashboard.
+
+---
+
+## 📁 System Architecture
+
+```text
+HELIOS-X/
+│
+├── backend/                  # Python FastAPI Backend Engine
+│   ├── app/
+│   │   ├── api/              # RESTful API Endpoints (Fusion, Alerts, Events)
+│   │   ├── models/           # SQLAlchemy DB Schemas & PostGIS Structs
+│   │   └── services/         # Core Logic (ML, SHAP, Satellite I/O, Fusion)
+│   └── init_db.py            # Master CLI Pipeline Orchestrator
+│
+├── frontend/                 # React UI Dashboard
+│   ├── src/
+│   │   ├── components/       # Glassmorphic UI Panels, Map, Charts
+│   │   └── App.jsx           # Main Dashboard View & Layer Control
+│   └── tailwind.config.js    # Custom Theme Configuration
+│
+├── docker-compose.yml        # PostgreSQL/PostGIS Configuration
+└── start.bat                 # 1-Click Launch Script
+```
+
+---
+
+## 🛡️ License & Acknowledgements
+
+Developed for SIH 2024. Satellite data provided courtesy of NASA FIRMS, ESA Copernicus, OpenStreetMap, and the Microsoft Planetary Computer.
