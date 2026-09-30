@@ -110,4 +110,4 @@ HELIOS-X/
 
 ## 🛡️ License & Acknowledgements
 
-Developed for SIH 2024. Satellite data provided courtesy of NASA FIRMS, ESA Copernicus, OpenStreetMap, and the Microsoft Planetary Computer.
+Developed for SIH 2026. Satellite data provided courtesy of NASA FIRMS, ESA Copernicus, OpenStreetMap, and the Microsoft Planetary Computer.
